@@ -1,0 +1,71 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: queryservice
+spec:
+  selector:
+    matchLabels:
+      app: queryservice
+  replicas: 2
+  template:
+    metadata:
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundIPRanges: 0.0.0.0/0
+      labels:
+        app: queryservice
+        tier: frontend
+    spec:
+      containers:
+      - name: queryservice
+        image: gcr.io/coolretailer/queryservice:TAG_NAME
+        args: ["--spring.redis.host=REDIS_HOST",
+        "--spring.application.name=queryservice",
+        "--grpc.server.name=cacheservice",
+        "--grpc.server.port=6565",
+        "--server.port=8080"]
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 10        
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: server
+        - containerPort: 8081
+          name: management
+        env:  
+        - name: PROJECT_ID
+          value: coolretailer
+        - name: GOOGLE_CLOUD_PROJECT
+          value: coolretailer
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/app-gac/app-gac.json
+        volumeMounts:
+          - name: app-gac-vol
+            mountPath: "/etc/app-gac"
+            readOnly: true
+      volumes:
+      - name: app-gac-vol
+        secret:
+          secretName: app-gac
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: queryservice
+  labels:
+    app: queryservice
+    tier: frontend
+spec:
+  ports:
+  - port: 8080
+    name: http
+  selector:
+    app: queryservice
+    tier: frontend

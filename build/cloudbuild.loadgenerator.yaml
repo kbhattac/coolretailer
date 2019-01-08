@@ -1,0 +1,35 @@
+steps:
+
+- id: Build loadgenerator image
+  name: 'gcr.io/cloud-builders/docker'
+  args: [
+          'build', 
+          '--tag=gcr.io/$PROJECT_ID/loadgenerator:latest', 
+          '--cache-from', 'gcr.io/$PROJECT_ID/loadgenerator:latest',
+          '.'
+        ]
+  dir: 'src/loadgenerator'
+
+- id: Tag image with COMMIT_SHA
+  name: 'gcr.io/cloud-builders/docker'
+  args: [
+      'tag', 
+      'gcr.io/$PROJECT_ID/loadgenerator:latest', 
+      'gcr.io/$PROJECT_ID/loadgenerator:$COMMIT_SHA'
+    ]
+- id: Set image TAG_NAME in deployment manifests
+  name: 'ubuntu'
+  args: ['bash','-c','sed -i "s,TAG_NAME,$COMMIT_SHA," ./setup/kubernetes-manifests/loadgenerator.yaml']
+
+
+- id: Deploy to GKE
+  name: 'gcr.io/cloud-builders/kubectl'
+  args: ['apply', '-f', './setup/kubernetes-manifests/loadgenerator.yaml']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=europe-west4-a'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=istio-mesh'
+
+images: [
+          'gcr.io/$PROJECT_ID/loadgenerator:$COMMIT_SHA',
+          'gcr.io/$PROJECT_ID/loadgenerator:latest'
+        ]

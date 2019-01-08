@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+    <appender name="CLOUD" class="com.google.cloud.logging.logback.LoggingAppender">
+        <!-- Optional : filter logs at or above a level -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <enhancer>org.springframework.cloud.gcp.autoconfigure.logging.TraceIdLoggingEnhancer</enhancer>
+    </appender>
+    <root level="info">
+        <appender-ref ref="CLOUD" />
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

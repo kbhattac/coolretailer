@@ -1,0 +1,74 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cacheservice
+spec:
+  selector:
+    matchLabels:
+      app: cacheservice
+  replicas: 2
+  template:
+    metadata:
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundIPRanges: 0.0.0.0/0
+      labels:
+        app: cacheservice
+        tier: backend
+    spec:
+      containers:
+      - name: cacheservice
+        image: gcr.io/coolretailer/cacheservice:TAG_NAME
+        args: ["--spring.redis.host=REDIS_HOST",
+        "--spring.application.name=cacheservice",
+        "--grpc.server.name=dataservice",
+        "--grpc.server.port=6565",
+        "--grpc.port=6565", 
+        "--server.port=8080"]
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 10        
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 6565
+          name: grpc
+        - containerPort: 8080
+          name: health
+        env:  
+        - name: PROJECT_ID
+          value: coolretailer
+        - name: GOOGLE_CLOUD_PROJECT
+          value: coolretailer
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/app-gac/app-gac.json
+        volumeMounts:
+          - name: app-gac-vol
+            mountPath: "/etc/app-gac"
+            readOnly: true
+      volumes:
+      - name: app-gac-vol
+        secret:
+          secretName: app-gac
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cacheservice
+  labels:
+    app: cacheservice
+    tier: backend
+spec:
+  ports:
+  - port: 8080
+    name: http
+  - port: 6565
+    name: grpc
+  selector:
+    app: cacheservice
+    tier: backend

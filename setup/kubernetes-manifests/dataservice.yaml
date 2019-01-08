@@ -1,0 +1,69 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: dataservice
+spec:
+  selector:
+    matchLabels:
+      app: dataservice
+  replicas: 2
+  template:
+    metadata:
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundIPRanges: 0.0.0.0/0
+      labels:
+        app: dataservice
+        tier: backend
+    spec:
+      containers:
+      - name: dataservice
+        image: gcr.io/coolretailer/dataservice:TAG_NAME
+        args: ["--spring.redis.host=REDIS_HOST","--spring.application.name=dataservice"]
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 10        
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 6565
+          name: grpc
+        - containerPort: 8080
+          name: health
+        env:  
+        - name: PROJECT_ID
+          value: coolretailer
+        - name: GOOGLE_CLOUD_PROJECT
+          value: coolretailer
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/app-gac/app-gac.json
+        volumeMounts:
+          - name: app-gac-vol
+            mountPath: "/etc/app-gac"
+            readOnly: true
+      volumes:
+      - name: app-gac-vol
+        secret:
+          secretName: app-gac
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dataservice
+  labels:
+    app: dataservice
+    tier: backend
+spec:
+  ports:
+  - port: 8080
+    name: http
+  - port: 6565
+    name: grpc
+  selector:
+    app: dataservice
+    tier: backend

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coolretailer-ui
+spec:
+  selector:
+    matchLabels:
+      app: coolretailer-ui
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: coolretailer-ui
+        tier: frontend
+    spec:
+      containers:
+      - name: coolretailer-ui
+        image: gcr.io/coolretailer/coolretailer-ui:TAG_NAME
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 10  
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: server

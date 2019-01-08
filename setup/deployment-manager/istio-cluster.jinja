@@ -1,0 +1,152 @@
+{% set CLUSTER_NAME = env['deployment'] %}
+
+resources:
+
+- name: {{ properties['gkeClusterName'] }}
+  type:  gcp-types/container-v1beta1:projects.locations.clusters
+  properties:
+    parent: projects/{{ env['project'] }}/locations/{{ properties["zone"] }}
+    cluster:
+      name: {{ properties['gkeClusterName'] }}
+      legacyAbac:
+        enabled: false
+      initialClusterVersion: 1.10.9
+      addonsConfig:
+        istioConfig:
+            disabled: {{ properties['disableIstio'] }}
+            auth: {{ properties['tLSAuthMode'] }}
+      monitoringService: monitoring.googleapis.com/kubernetes
+      loggingService: logging.googleapis.com/kubernetes
+      initialNodeCount: {{ properties['initialNodeCount'] }}
+      nodeConfig:
+        machineType: {{ properties["instanceType"] }}
+        oauthScopes:
+        - https://www.googleapis.com/auth/cloud-platform
+        - https://www.googleapis.com/auth/devstorage.read_only
+        - https://www.googleapis.com/auth/logging.write
+        - https://www.googleapis.com/auth/monitoring
+        - https://www.googleapis.com/auth/servicecontrol
+        - https://www.googleapis.com/auth/service.management.readonly
+        - https://www.googleapis.com/auth/trace.append
+
+- type: runtimeconfig.v1beta1.config
+  name: {{ CLUSTER_NAME }}-config
+  properties:
+    config: {{ CLUSTER_NAME }}-config
+
+- type: runtimeconfig.v1beta1.waiter
+  name: {{ CLUSTER_NAME }}-waiter
+  metadata:
+    dependsOn:
+    - {{ CLUSTER_NAME }}-config
+  properties:
+    parent: $(ref.{{ CLUSTER_NAME }}-config.name)
+    waiter: {{ CLUSTER_NAME }}-waiter
+    timeout: 600s
+    success:
+      cardinality:
+        path: /success
+        number: 1
+    failure:
+      cardinality:
+        path: /failure
+        number: 1
+
+- name: {{ CLUSTER_NAME }}-vm
+  type: compute.v1.instance
+  metadata:
+    dependsOn:
+    - {{ properties['gkeClusterName'] }}
+  properties:
+    zone: {{ properties['zone'] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/{{ properties["instanceType"] }}
+    tags:
+      items:
+      -  istio-init
+    serviceAccounts:
+      - email: "default"
+        scopes:
+        - https://www.googleapis.com/auth/cloud-platform
+        - https://www.googleapis.com/auth/compute
+        - https://www.googleapis.com/auth/logging.write
+        - https://www.googleapis.com/auth/monitoring
+        - https://www.googleapis.com/auth/servicecontrol
+        - https://www.googleapis.com/auth/service.management.readonly
+        - https://www.googleapis.com/auth/userinfo.email
+
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/default
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskName: {{ CLUSTER_NAME }}-vm-disk
+        sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/family/debian-9
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash -x
+
+          apt-get update && apt-get install -y git google-cloud-sdk curl kubectl
+
+          export HOME=/root
+          cd /root/
+
+          gcloud container clusters get-credentials {{ properties['gkeClusterName'] }} --zone {{ properties['zone'] }}
+          kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$(gcloud config get-value core/account)
+
+          {% if  properties['enableAutomaticSidecarInjection'] %}
+            kubectl label namespace default istio-injection=enabled
+          {% endif %}
+
+          kubectl apply -f https://storage.googleapis.com/gke-release/istio/release/1.0.3-gke.0/stackdriver/stackdriver-tracing.yaml
+
+          kubectl apply -f https://storage.googleapis.com/gke-release/istio/release/1.0.3-gke.0/stackdriver/stackdriver-logs.yaml
+
+          kubectl apply -n istio-system -f https://storage.googleapis.com/gke-release/istio/release/1.0.3-gke.0/patches/install-prometheus.yaml
+
+
+          wget https://github.com/istio/istio/releases/download/{{ properties['installIstioRelease'] }}/istio-{{ properties['installIstioRelease'] }}-linux.tar.gz
+          tar xzf istio-{{ properties['installIstioRelease'] }}-linux.tar.gz
+
+          wget -P /root/helm/ https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz
+          tar xf /root/helm/helm-v2.11.0-linux-amd64.tar.gz  -C /root/helm/
+          export PATH="$PATH:/root/istio-{{ properties['installIstioRelease'] }}/bin::/root/helm/linux-amd64/"
+          cd /root/istio-{{ properties['installIstioRelease'] }}
+
+          helm template install/kubernetes/helm/istio/charts/kiali --name kiali --namespace istio-system --set global.imagePullSecrets= --set dashboard.username=admin --set dashboard.passphrase=admin  --set ingress.enabled=false --set hub=docker.io/kiali --set tag=v0.9  > kiali.yaml
+          sed -i.bak s/prometheus:9090/prometheus-user:9090/g kiali.yaml
+
+          kubectl apply -n istio-system -f kiali.yaml
+
+          {% if  properties['enableBookInfoSample'] %}
+            kubectl create namespace bookinfo
+            kubectl label namespace bookinfo istio-injection=enabled
+
+            kubectl apply -n bookinfo -f  samples/bookinfo/platform/kube/bookinfo.yaml
+            kubectl apply -n bookinfo -f  samples/bookinfo/networking/bookinfo-gateway.yaml
+
+            kubectl apply -n bookinfo -f samples/bookinfo/networking/destination-rule-all.yaml
+            kubectl apply -n bookinfo -f samples/bookinfo/networking/virtual-service-all-v1.yaml
+
+            kubectl scale deployment.extensions/reviews-v2 -n bookinfo --replicas=0
+            kubectl scale deployment.extensions/reviews-v3 -n bookinfo --replicas=0
+
+            kubectl rollout status deployment.extensions/productpage-v1 -n bookinfo --timeout=60s
+            kubectl rollout status deployment.extensions/ratings-v1 -n bookinfo --timeout=60s
+            kubectl rollout status deployment.extensions/details-v1 -n bookinfo --timeout=60s
+            kubectl rollout status deployment.extensions/reviews-v1 -n bookinfo --timeout=60s
+            kubectl rollout status deployment.extensions/reviews-v2 -n bookinfo --timeout=60s
+            kubectl rollout status deployment.extensions/reviews-v3 -n bookinfo --timeout=60s
+
+          {% endif %}
+
+
+          gcloud beta runtime-config configs variables set success/{{ CLUSTER_NAME }}-waiter success --config-name $(ref.{{ CLUSTER_NAME }}-config.name)
+          gcloud -q compute instances delete {{ CLUSTER_NAME }}-vm --zone {{ properties['zone'] }}

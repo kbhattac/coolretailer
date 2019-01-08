@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loadcache
+spec:
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+      - name: loadcache
+        image: gcr.io/coolretailer/cacheservice:latest
+        args: ["--spring.redis.host=redis-master", 
+        "--clear-cache",
+        "--process-cache",
+        "--exit",
+        "--spring.application.name=loadcache",
+        "--grpc.server.name=dataservice",
+        "--grpc.server.port=6565",
+        "--grpc.port=6565", 
+        "--server.port=8080"]
+      restartPolicy: Never
+  backoffLimit: 4

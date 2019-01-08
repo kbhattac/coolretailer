@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+package com.coolretailer.ux.grpc.system;
+
+message Query {
+  string queryString = 1;
+}
+
+message Result {
+  repeated string name = 1;
+}
+
+message Limit {
+  int32 limit = 1;
+}
+
+message Empty {}
+
+service DataService {
+  rpc RunQuery (Query) returns (Result){
+  }
+  rpc UpdateCache(Query) returns (Result) {
+  }
+}
+service CacheService {
+
+  rpc GetSuggestions (Query) returns (Result) {
+
+  }
+  rpc ProcessCache (Limit) returns (Empty){
+
+  }
+  rpc ClearCache (Empty) returns (Empty){
+    
+  }
+
+}

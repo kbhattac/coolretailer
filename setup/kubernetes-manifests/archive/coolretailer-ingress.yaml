@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: fanout-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /fetchProducts
+        backend:
+          serviceName: coolretailer-app
+          servicePort: 8080
+      - path: /*
+        backend:
+          serviceName: coolretailer-ui
+          servicePort: 80                    

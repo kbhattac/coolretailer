@@ -1,0 +1,19 @@
+# For debugging the build container locally
+# docker run -it --entrypoint /bin/bash -e CLOUDSDK_COMPUTE_ZONE=<zone> -e CLOUDSDK_CONTAINER_CLUSTER=<cluster> -e CLOUDSDK_CORE_PROJECT=<project_id> gcr.io/cloud-builders/kubectl
+
+steps:
+- id: Set image FRONTEND_ADDR_ in loadgenerator deployment
+  name: 'gcr.io/cloud-builders/kubectl'
+  entrypoint: '/bin/bash'
+  args:
+    - '-c'
+    - >
+        curl https://raw.githubusercontent.com/kbhattac/CoolRetailer/master/src/main/resources/setup/kubernetes-manifests/loadgenerator.yaml > /loadgenerator.yaml
+        && /builder/kubectl.bash
+        && sed -i "s,FRONTEND_ADDR_,`/builder/kubectl.bash -n istio-system get service istio-ingressgateway -o jsonpath={.status.loadBalancer.ingress[0].ip}|tail -1`,g" 
+        /loadgenerator.yaml
+        && cat /loadgenerator.yaml
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=europe-west1-b'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=coolretailer'
+  - 'CLOUDSDK_CORE_PROJECT=coolretailer'

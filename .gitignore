@@ -1,0 +1,11 @@
+/.sts4-cache
+/target
+*.json
+!test.*json
+.factorypath
+.DS_Store
+**.pyc
+src/proto/target/
+src/proto/.*
+src/target/
+src/.**

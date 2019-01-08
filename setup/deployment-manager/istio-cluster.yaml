@@ -1,0 +1,17 @@
+
+imports:
+- path: istio-cluster.jinja
+
+resources:
+- name: istio-mesh
+  type: istio-cluster.jinja
+  properties:
+    gkeClusterName: istio-mesh
+    zone: europe-west4-a
+    initialNodeCount: 5
+    instanceType: n1-standard-2
+    enableBookInfoSample: true
+    tLSAuthMode: AUTH_NONE
+    enableAutomaticSidecarInjection: true
+    disableIstio: false
+    installIstioRelease: 1.0.3
