@@ -18,4 +18,5 @@ FROM base
 COPY --from=builder /install /usr/local
 
 COPY . .
+EXPOSE 8089
 ENTRYPOINT ./loadgen.sh

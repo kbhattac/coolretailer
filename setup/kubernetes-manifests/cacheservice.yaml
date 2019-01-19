@@ -14,10 +14,11 @@ spec:
       labels:
         app: cacheservice
         tier: backend
+        version: v1
     spec:
       containers:
       - name: cacheservice
-        image: gcr.io/coolretailer/cacheservice:TAG_NAME
+        image: gcr.io/_PROJECT_ID/cacheservice:TAG_NAME
         args: ["--spring.redis.host=REDIS_HOST",
         "--spring.application.name=cacheservice",
         "--grpc.server.name=dataservice",
@@ -42,9 +43,9 @@ spec:
           name: health
         env:  
         - name: PROJECT_ID
-          value: coolretailer
+          value: _PROJECT_ID
         - name: GOOGLE_CLOUD_PROJECT
-          value: coolretailer
+          value: _PROJECT_ID
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /etc/app-gac/app-gac.json
         volumeMounts:

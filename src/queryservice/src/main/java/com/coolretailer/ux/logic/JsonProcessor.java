@@ -25,6 +25,9 @@ public class JsonProcessor implements ApplicationRunner {
 	public void run(ApplicationArguments args) throws Exception {
 		if (args.containsOption("input.json")) {
 			toNdJson(args.getOptionValues("input.json").get(0));
+			if (args.containsOption("exit")) {
+				System.exit(0);
+			}
 		}
 	}
 

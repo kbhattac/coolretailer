@@ -1,0 +1,15 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: queryservice-delay
+spec:
+  hosts:
+  - queryservice.default.svc.cluster.local
+  http:
+  - route:
+    - destination:
+        host: queryservice.default.svc.cluster.local
+    fault:
+      delay:
+        percent: 80
+        fixedDelay: 9s

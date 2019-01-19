@@ -18,6 +18,7 @@ import random
 import uuid
 import logging
 import os
+import string
 from locust import HttpLocust, TaskSet
 from locust.events import request_failure
 from binascii import hexlify
@@ -33,7 +34,8 @@ prefixes = [
     'am',
     'ma',
     'ip',
-    'sdf']
+    'sdf'
+]
 
 USER_AGENTS = [
     "Mozilla/5.0 (Linux; Android 4.1.1; Nexus 7 Build/JRO03D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Safari/535.19 (LocustIO)",
@@ -71,13 +73,17 @@ def findProduct(l):
         "User-Agent": random.choice(USER_AGENTS),
         "x-client-trace-id": str(uuid.uuid4()),
         "x-b3-sampled": "1",
-        "x-b3-flags": "1",	
+        "x-b3-flags": "1",
         "x-b3-traceid": b3.generateHeader(32),
         "x-b3-spanid": b3.generateHeader(16)
     }
-    logging.info(h)
+    # logging.info(h)
+    nonexisting = "".join(random.choice(string.ascii_lowercase)
+                          for x in range(5))
+    prefixes.append(nonexisting)
     l.client.get("/api/fetchProducts?name=" +
                  random.choice(prefixes), headers=h)
+    prefixes.remove(nonexisting)
 
 
 class UserBehavior(TaskSet):

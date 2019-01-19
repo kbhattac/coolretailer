@@ -10,7 +10,7 @@ $(document).ready(function () {
 		queryTokenizer: Bloodhound.tokenizers.whitespace,
 		remote: {
 			wildcard: '%QUERY',
-			url: 'http://35.204.190.91/api/fetchProducts?name=%QUERY',
+			url: 'http://_ENDPOINT/api/fetchProducts?name=%QUERY',
 			transform: function (response) {
 				// Map the remote source JSON array to a JavaScript object array
 				return $.map(response, function (suggestion) {
@@ -43,7 +43,7 @@ $(document).ready(function () {
 
 
 	$.ajax({
-		url: "http://35.204.190.91/api/buildInfo"
+		url: "http://_ENDPOINT/api/buildInfo"
 	}).then(function (data) {
 		$('#footer').append(data);
 	});

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+PROJECT_ID=$(gcloud info --format='value(config.project)')
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+
+GKE_CLUSTER=coolretailer
+ZONE=europe-west4-a
+VERSION=1.0.0
+REDIS_HOST=redis-master
+COMMIT_SHA=`git rev-parse HEAD`
+
+if [ -f account.txt ]; then
+  SERVICE_ACCOUNT_NAME=$(cat account.txt)
+else
+  SERVICE_ACCOUNT_NAME="coolretailer-app-$(date +"%s")"
+  echo $SERVICE_ACCOUNT_NAME > account.txt
+fi
+  
+SA_EMAIL=$(gcloud iam service-accounts list \
+  --filter="displayName:$SERVICE_ACCOUNT_NAME" \
+  --format='value(email)')
+
+CLOUD_BUILD_EMAIL=$PROJECT_NUMBER@cloudbuild.gserviceaccount.com
+
+if [ -f bucket.txt ]; then
+  BUCKET_NAME=$(cat bucket.txt)
+else
+  BUCKET_NAME="coolretailer-gcs-bucket-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 20 | head -n 1)-$(date +"%s")"
+  echo $BUCKET_NAME > bucket.txt
+fi
+
+BUCKET_URI="gs://$BUCKET_NAME"

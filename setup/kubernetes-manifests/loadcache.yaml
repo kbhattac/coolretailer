@@ -10,7 +10,7 @@ spec:
     spec:
       containers:
       - name: loadcache
-        image: gcr.io/coolretailer/cacheservice:latest
+        image: gcr.io/_PROJECT_ID/cacheservice:latest
         args: ["--spring.redis.host=redis-master", 
         "--clear-cache",
         "--process-cache",

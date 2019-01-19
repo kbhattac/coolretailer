@@ -26,8 +26,8 @@ steps:
   name: 'gcr.io/cloud-builders/kubectl'
   args: ['apply', '-f', './setup/kubernetes-manifests/loadgenerator.yaml']
   env:
-  - 'CLOUDSDK_COMPUTE_ZONE=europe-west4-a'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=istio-mesh'
+  - 'CLOUDSDK_COMPUTE_ZONE=$_ZONE'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=$_GKE_CLUSTER'
 
 images: [
           'gcr.io/$PROJECT_ID/loadgenerator:$COMMIT_SHA',

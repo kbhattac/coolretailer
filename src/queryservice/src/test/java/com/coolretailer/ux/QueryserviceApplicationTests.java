@@ -18,6 +18,8 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -40,7 +42,12 @@ public class QueryserviceApplicationTests {
 	@Test
 	public void testGetSuggestions() throws Exception {
 		// check existing
-		assertTrue(new Gson().fromJson(queryService.fetchProducts("va"), List.class).size() == 3);
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		assertTrue(new Gson().fromJson(queryService.fetchProducts("va", request, response), List.class).size() == 3);
+		response.getHeaderNames().forEach(header -> {
+			assertTrue(response.getHeader(header) != null);
+		});
 
 	}
 
@@ -81,7 +88,10 @@ public class QueryserviceApplicationTests {
 
 			@Override
 			public boolean containsOption(String name) {
-				return true;
+				if (name.equals("input.json")) {
+					return true;
+				}
+				return false;
 			}
 		};
 		jsonProcessor.run(args);

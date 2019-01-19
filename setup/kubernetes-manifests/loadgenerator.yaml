@@ -22,6 +22,8 @@ spec:
     metadata:
       labels:
         app: loadgenerator
+        tier: frontend
+        version: v1
     spec:
       terminationGracePeriodSeconds: 5
       restartPolicy: Always
@@ -38,7 +40,21 @@ spec:
           value: "queryservice:8080"
       containers:
       - name: main
-        image: gcr.io/coolretailer/loadgenerator:TAG_NAME
+        image: gcr.io/_PROJECT_ID/loadgenerator:TAG_NAME
+        ports:
+        - containerPort: 8089
+          name: http
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 8089
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 10        
+        imagePullPolicy: Always
         env:
         - name: FRONTEND_ADDR
           value: "queryservice:8080"
@@ -51,3 +67,18 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loadgenerator
+  labels:
+    app: loadgenerator
+    tier: frontend
+spec:
+  ports:
+  - port: 8089
+    name: http
+  selector:
+    app: loadgenerator
+    tier: frontend

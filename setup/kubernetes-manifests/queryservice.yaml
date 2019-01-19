@@ -14,10 +14,11 @@ spec:
       labels:
         app: queryservice
         tier: frontend
+        version: v1
     spec:
       containers:
       - name: queryservice
-        image: gcr.io/coolretailer/queryservice:TAG_NAME
+        image: gcr.io/_PROJECT_ID/queryservice:TAG_NAME
         args: ["--spring.redis.host=REDIS_HOST",
         "--spring.application.name=queryservice",
         "--grpc.server.name=cacheservice",
@@ -41,9 +42,9 @@ spec:
           name: management
         env:  
         - name: PROJECT_ID
-          value: coolretailer
+          value: _PROJECT_ID
         - name: GOOGLE_CLOUD_PROJECT
-          value: coolretailer
+          value: _PROJECT_ID
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /etc/app-gac/app-gac.json
         volumeMounts:

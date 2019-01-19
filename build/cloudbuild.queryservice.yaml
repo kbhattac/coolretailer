@@ -23,7 +23,7 @@ steps:
   name: 'gcr.io/cloud-builders/mvn'
   args: ['-Dmaven.repo.local=/workspace/.m2/repository','-f','src/','-pl','queryservice','install']
   env: 
-  - 'GOOGLE_CLOUD_PROJECT=coolretailer'
+  - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
   - 'GOOGLE_APPLICATION_CREDENTIALS=/workspace/app-gac.json'
 
 - id: Build app image
@@ -52,12 +52,17 @@ steps:
   name: 'ubuntu'
   args: ['bash','-c','sed -i "s,REDIS_HOST,redis-master," ./setup/kubernetes-manifests/queryservice.yaml']
 
+- id: Set image PROJECT_ID in deployment manifests
+  name: 'ubuntu'
+  args: ['bash','-c','sed -i "s,_PROJECT_ID,$PROJECT_ID," ./setup/kubernetes-manifests/queryservice.yaml']
+  
 - id: Deploy to GKE
   name: 'gcr.io/cloud-builders/kubectl'
   args: ['apply', '-f', './setup/kubernetes-manifests/queryservice.yaml']
   env:
-  - 'CLOUDSDK_COMPUTE_ZONE=europe-west4-a'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=istio-mesh'
+  - 'CLOUDSDK_COMPUTE_ZONE=$_ZONE'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=$_GKE_CLUSTER'
+  - 'PROJECT_ID=$PROJECT_ID'
 
 images: [
           'gcr.io/$PROJECT_ID/queryservice:$COMMIT_SHA',
