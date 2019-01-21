@@ -21,6 +21,9 @@ steps:
   name: 'ubuntu'
   args: ['bash','-c','sed -i "s,TAG_NAME,$COMMIT_SHA," ./setup/kubernetes-manifests/loadgenerator.yaml']
 
+- id: Set image PROJECT_ID in deployment manifests
+  name: 'ubuntu'
+  args: ['bash','-c','sed -i "s,_PROJECT_ID,$PROJECT_ID," ./setup/kubernetes-manifests/loadgenerator.yaml']
 
 - id: Deploy to GKE
   name: 'gcr.io/cloud-builders/kubectl'
