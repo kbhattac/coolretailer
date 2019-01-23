@@ -82,7 +82,7 @@ docker run \
 ![CoolRetailer](https://github.com/kbhattac/CoolRetailer/blob/master/images/capture.png)
 #### Cloud Trace with Log correlation
 ![Trace](https://github.com/kbhattac/CoolRetailer/blob/master/images/trace.png)
-#### Service Mesh
+#### Istio fault injection
 ![Mesh](https://github.com/kbhattac/CoolRetailer/blob/master/images/mesh.png)
 #### Grafana
 ![Grafana](https://github.com/kbhattac/CoolRetailer/blob/master/images/grafana.png)
