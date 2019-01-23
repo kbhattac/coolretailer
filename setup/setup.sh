@@ -94,7 +94,7 @@ bold "Creating cluster..."
 gcloud beta container clusters create $GKE_CLUSTER \
   --zone $ZONE \
   --username "admin" \
-  --cluster-version "1.10.9-gke.7" \
+  --cluster-version "1.10.11-gke.1" \
   --machine-type "n1-standard-2" \
   --image-type "COS" \
   --disk-type "pd-standard" \
