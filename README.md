@@ -12,6 +12,7 @@
 - Dataset from BestBuy (converted to ndjson using `JsonProcessor`)
 - Developed completely with [VSCode](https://code.visualstudio.com/)
 - Inspired by [Next '18 Microservices Demo](https://github.com/GoogleCloudPlatform/microservices-demo)
+- Covering slides on [Slideshare](https://www.slideshare.net/KaushikBhattacharya/devops-sre-at-google-scale)
 
 ### Architecture:
 ![Architecture](https://github.com/kbhattac/CoolRetailer/blob/master/images/arch.png)
@@ -19,7 +20,7 @@
 ### Automatic Installation:
 [![Open in Cloud Shell](http://gstatic.com/cloudssh/images/open-btn.svg)](https://console.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https%3A%2F%2Fgithub.com%2Fkbhattac%2Fcoolretailer&cloudshell_working_dir=setup&cloudshell_tutorial=README.md)
 
-Guided one click installation from Google Cloud Shell. No client tooling required.
+Guided one click installation from Google Cloud Shell. Complete stack (incl. all dashboards shown below + Istio fault simulation). No client tooling required.
 
 
 ### Manual Installation:
