@@ -75,6 +75,4 @@ bold "Deleting BigQuery dataset coolretailer..."
 bq rm -r --force coolretailer
 bold "Deleting Front End bucket $PROJECT_ID.appspot.com/coolretailer ..."
 gsutil rm -r gs://$PROJECT_ID.appspot.com/coolretailer
-bold "Deleting git clone dir..."
-rm -rf coolretailer
 bold "Uninstallation complete!"

@@ -20,18 +20,18 @@ collect all of the related resources for a single application in one place.
 
 ## Enable API access
 
-This tutorial will require the use of the following APIs. These will be enabled during the installation, so click on Next below.
+This tutorial will require the use of the following APIs. Please enable them and click on Next to continue.
 
 <walkthrough-enable-apis apis="container.googleapis.com,containeranalysis.googleapis.com,cloudkms.googleapis.com,cloudbuild.googleapis.com,sourcerepo.googleapis.com,cloudtrace.googleapis.com,logging.googleapis.com,monitoring.googleapis.com">
 </walkthrough-enable-apis>
 
 ## Installation
 
-This <walkthrough-editor-open-file filePath="coolretailer/setup/setup.sh">script</walkthrough-editor-open-file> sets up the complete application and monitoring stack. At the end note the **Application URL** and **API endpoint** for testing the application.
+This <walkthrough-editor-open-file filePath="coolretailer/setup/deploy.sh">script</walkthrough-editor-open-file> sets up the complete application and monitoring stack. At the end note the **Application URL** and **API endpoint** for testing the application.
 
 **Time to complete**: 15 mins
 
-    ./setup.sh
+    ./deploy.sh
 
 ## Review application
 
