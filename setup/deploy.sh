@@ -71,7 +71,14 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 bold "Importing data..."
 wget https://raw.githubusercontent.com/BestBuyAPIs/open-data-set/master/products.json
-mvn spring-boot:run -f ../src/queryservice -Dspring-boot.run.arguments=--spring.profiles.active=JSON,--input.json="$PWD"/products.json,--exit
+
+docker run \
+  -v "$PWD":/tmp \
+  -it gcr.io/coolretailer/queryservice:latest \
+  --spring.profiles.active=JSON \
+  --input.json=/tmp/products.json \
+  --exit
+
 gsutil mb -p $PROJECT_ID -l europe-west4 $BUCKET_URI
 gsutil cp products.nd.json $BUCKET_URI
 bq --location=EU mk -d coolretailer
@@ -81,7 +88,7 @@ bold "Creating cluster..."
 gcloud beta container clusters create $GKE_CLUSTER \
   --zone $ZONE \
   --username "admin" \
-  --cluster-version "1.10.11-gke.1" \
+  --cluster-version "1.11.7-gke.4" \
   --machine-type "n1-standard-2" \
   --image-type "COS" \
   --disk-type "pd-standard" \
