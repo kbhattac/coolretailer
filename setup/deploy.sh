@@ -31,14 +31,16 @@ gcloud iam service-accounts create \
   $SERVICE_ACCOUNT_NAME \
   --display-name $SERVICE_ACCOUNT_NAME
 
-SA_EMAIL=$(gcloud iam service-accounts list \
-  --filter="displayName:$SERVICE_ACCOUNT_NAME" \
-  --format='value(email)')
-  
-if [ -z "$SA_EMAIL" ]; then
-  err "Service Account email is empty. Exiting."
-  exit 1
-fi
+#count=2
+#while [ -z "$SA_EMAIL" && $count -gt 0 ]
+#do
+    SA_EMAIL=$(gcloud iam service-accounts list \
+      --filter="displayName:$SERVICE_ACCOUNT_NAME" \
+      --format='value(email)')
+    bold "Waiting for service account to be active..."
+    sleep 10
+#    count--
+#done
 
 bold "Adding policy binding to $SERVICE_ACCOUNT_NAME email: $SA_EMAIL"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -88,7 +90,6 @@ bold "Creating cluster..."
 gcloud beta container clusters create $GKE_CLUSTER \
   --zone $ZONE \
   --username "admin" \
-  --cluster-version "1.11.7-gke.4" \
   --machine-type "n1-standard-2" \
   --image-type "COS" \
   --disk-type "pd-standard" \
@@ -124,37 +125,47 @@ kubectl create clusterrolebinding kiali \
 
 
 bold "Installing SRE stack..."
-wget -qO- https://github.com/istio/istio/releases/download/1.0.3/istio-1.0.3-linux.tar.gz | tar xvz
-cd istio-1.0.3
+wget -qO- https://github.com/istio/istio/releases/download/1.0.6/istio-1.0.6-linux.tar.gz | tar xvz
+cd istio-1.0.6
 kubectl label namespace default istio-injection=enabled
-kubectl apply -f https://storage.googleapis.com/gke-release/istio/release/1.0.3-gke.0/stackdriver/stackdriver-tracing.yaml
-kubectl apply -f https://storage.googleapis.com/gke-release/istio/release/1.0.3-gke.0/stackdriver/stackdriver-logs.yaml
-kubectl apply -n istio-system -f https://storage.googleapis.com/gke-release/istio/release/1.0.3-gke.0/patches/install-prometheus.yaml
-wget -O ./install-grafana.yaml https://storage.googleapis.com/gke-release/istio/release/1.0.3-gke.0/patches/install-grafana.yaml
-sed -i.bak s/prometheus:9090/prometheus-user:9090/g install-grafana.yaml
-kubectl apply -n istio-system -f install-grafana.yaml
 
-wget -O install/kubernetes/helm/istio/charts/kiali/templates/clusterrole.yaml https://raw.githubusercontent.com/kiali/kiali/v0.13/deploy/kubernetes/clusterrole.yaml
-sed -i "s/\${VERSION_LABEL}/master/g" install/kubernetes/helm/istio/charts/kiali/templates/clusterrole.yaml
+bold "Install Prometheus..."
+kubectl apply -n istio-system -f https://storage.googleapis.com/gke-release/istio/release/1.0.6-gke.3/patches/install-prometheus.yaml
 
 bold "Install Helm..."
 wget -P ./helm https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz
 tar xf ./helm/helm-v2.11.0-linux-amd64.tar.gz  -C ./helm/
-export PATH="$PATH:./istio-1.0.3/bin::./helm/linux-amd64/"
+export PATH="$PATH:./istio-1.0.6/bin::./helm/linux-amd64/"
+
+bold "Install Grafana..."
+
+helm template --set grafana.enabled=false --namespace istio-system install/kubernetes/helm/istio > off.yaml
+helm template --set grafana.enabled=true --namespace istio-system install/kubernetes/helm/istio > on.yaml
+diff --line-format=%L on.yaml off.yaml > grafana.yaml
+kubectl apply -n istio-system -f grafana.yaml
+
+bold "Install Kiali..."
+
+wget -O install/kubernetes/helm/istio/charts/kiali/templates/clusterrole.yaml https://raw.githubusercontent.com/kiali/kiali/v0.13/deploy/kubernetes/clusterrole.yaml
+sed -i "s/\${VERSION_LABEL}/master/g" install/kubernetes/helm/istio/charts/kiali/templates/clusterrole.yaml
+
+kubectl apply -n istio-system -f ../istio-manifests/kiali-secrets.yaml
 
 helm template install/kubernetes/helm/istio/charts/kiali \
   --name kiali \
   --namespace istio-system \
   --set global.imagePullSecrets= \
-  --set dashboard.username=admin \
-  --set dashboard.passphrase=admin  \
+  --set dashboard.secretName=kiali \
+  --set dashboard.usernameKey=username  \
+  --set dashboard.passphraseKey=passphrase  \
   --set ingress.enabled=false \
   --set hub=docker.io/kiali \
   --set dashboard.grafanaURL=http://grafana:3000 \
   --set tag=v0.13  > kiali.yaml
-sed -i.bak s/prometheus:9090/prometheus-user:9090/g kiali.yaml
+
 kubectl apply -n istio-system -f kiali.yaml
 cd ..
+
 kubectl apply -f ./istio-manifests/
 
 bold "Patching manifests..."
