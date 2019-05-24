@@ -31,16 +31,18 @@ gcloud iam service-accounts create \
   $SERVICE_ACCOUNT_NAME \
   --display-name $SERVICE_ACCOUNT_NAME
 
-#count=2
-#while [ -z "$SA_EMAIL" && $count -gt 0 ]
-#do
-    SA_EMAIL=$(gcloud iam service-accounts list \
-      --filter="displayName:$SERVICE_ACCOUNT_NAME" \
-      --format='value(email)')
-    bold "Waiting for service account to be active..."
-    sleep 10
-#    count--
-#done
+
+SA_EMAIL=$(gcloud iam service-accounts list \
+  --filter="displayName:$SERVICE_ACCOUNT_NAME" \
+  --format='value(email)')
+
+bold "Waiting 10s for service account to be active..."
+sleep 10
+
+if [ -z "$SA_EMAIL" ]; then
+  err "Service Account email is empty. Exiting."
+  exit 1
+fi
 
 bold "Adding policy binding to $SERVICE_ACCOUNT_NAME email: $SA_EMAIL"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
