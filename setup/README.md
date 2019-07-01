@@ -22,8 +22,8 @@ collect all of the related resources for a single application in one place.
 
 This tutorial will require the use of the following APIs. Please enable them and click on Next to continue.
 
-<walkthrough-enable-apis apis="container.googleapis.com,containeranalysis.googleapis.com,cloudkms.googleapis.com,cloudbuild.googleapis.com,sourcerepo.googleapis.com,cloudtrace.googleapis.com,logging.googleapis.com,monitoring.googleapis.com">
-</walkthrough-enable-apis>
+<enable-apis apis="container.googleapis.com,containeranalysis.googleapis.com,cloudkms.googleapis.com,cloudbuild.googleapis.com,sourcerepo.googleapis.com,cloudtrace.googleapis.com,logging.googleapis.com,monitoring.googleapis.com">
+</enable-apis>
 
 ## Installation
 
