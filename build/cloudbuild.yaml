@@ -12,8 +12,9 @@ steps:
   - --key=app-gac
 
 - id: Build jars
-  name: 'gcr.io/cloud-builders/mvn'
-  args: ['-Dmaven.repo.local=/workspace/.m2/repository','-f','src','install']
+  name: 'maven:3-jdk-8'
+  entrypoint: mvn  
+  args: ['-Dmaven.repo.local=/workspace/.m2/repository','-f','src','install',"-DskipTests"]
   env: 
   - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
   - 'GOOGLE_APPLICATION_CREDENTIALS=/workspace/app-gac.json'

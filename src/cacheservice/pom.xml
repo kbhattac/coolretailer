@@ -124,7 +124,6 @@
 			<plugin>
 				<groupId>pl.project13.maven</groupId>
 				<artifactId>git-commit-id-plugin</artifactId>
-				<version>3.0.0-SNAPSHOT</version>
 				<executions>
 					<execution>
 						<id>get-git-info</id>
@@ -142,6 +141,7 @@
 					</execution>
 				</executions>
 				<configuration>
+					<failOnNoGitDirectory>false</failOnNoGitDirectory>
 					<excludeProperties>
 						<excludeProperty>git.user.*</excludeProperty>
 						<excludeProperty>git.commit.user.*</excludeProperty>
