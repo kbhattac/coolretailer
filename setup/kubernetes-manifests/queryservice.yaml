@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: queryservice
@@ -64,9 +64,10 @@ metadata:
     app: queryservice
     tier: frontend
 spec:
+  type: LoadBalancer
   ports:
-  - port: 8080
-    name: http
+  - port: 80
+    targetPort: 8080
   selector:
     app: queryservice
     tier: frontend
